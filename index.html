@@ -482,19 +482,53 @@ const ACCENTS = ['var(--c0)','var(--c1)','var(--c2)'];
 const ACCENTBGS = ['var(--c0bg)','var(--c1bg)','var(--c2bg)'];
 
 // ═══════════════════════════════════════════════════════════
-//  API — fetch GET (GitHub Pages https → Apps Script)
+//  API — Apps Script 리다이렉트 우회
+//  읽기(getData): image 태그 트릭으로 CORS 우회
+//  쓰기(나머지): no-cors fetch (응답 못 읽어도 서버엔 도착)
 // ═══════════════════════════════════════════════════════════
-async function api(action, body = {}) {
+function buildUrl(action, body = {}) {
   const params = new URLSearchParams({ action });
   Object.entries(body).forEach(([k, v]) => params.set(k, String(v)));
-  const url = SCRIPT_URL + '?' + params.toString();
+  return SCRIPT_URL + '?' + params.toString();
+}
+
+// 읽기 전용: JSONP 방식 (Apps Script callback 파라미터 지원)
+function apiRead(action, body = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = '_cb' + Date.now() + Math.random().toString(36).slice(2);
+    const params = new URLSearchParams({ action, callback: cb });
+    Object.entries(body).forEach(([k, v]) => params.set(k, String(v)));
+    const url = SCRIPT_URL + '?' + params.toString();
+
+    window[cb] = (data) => {
+      delete window[cb];
+      document.getElementById(cb)?.remove();
+      resolve(data);
+    };
+    const s = document.createElement('script');
+    s.id = cb;
+    s.src = url;
+    s.onerror = () => { delete window[cb]; s.remove(); reject(new Error('JSONP failed')); };
+    document.head.appendChild(s);
+    setTimeout(() => { delete window[cb]; s.remove(); reject(new Error('timeout')); }, 10000);
+  });
+}
+
+// 쓰기 전용: no-cors fetch (리다이렉트/CORS 무시, 응답 못 읽어도 서버엔 저장됨)
+async function apiWrite(action, body = {}) {
+  const url = buildUrl(action, body);
   try {
-    const res = await fetch(url, { redirect: 'follow' });
-    return await res.json();
+    await fetch(url, { method: 'GET', mode: 'no-cors' });
   } catch(e) {
-    console.warn('API error:', e);
-    return { ok: true }; // 낙관적 업데이트 유지
+    console.warn('write error:', e);
   }
+  return { ok: true };
+}
+
+// 통합 api 함수
+async function api(action, body = {}) {
+  if (action === 'getData') return apiRead(action, body);
+  return apiWrite(action, body);
 }
 
 // ═══════════════════════════════════════════════════════════

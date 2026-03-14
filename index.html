@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="포인트 왕국">
+<title>⭐ 포인트 왕국</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #0D0D1A;
+  --surface: #161628;
+  --surface2: #1E1E35;
+  --c0: #FF6B6B; --c0bg: rgba(255,107,107,0.14);
+  --c1: #4ECDC4; --c1bg: rgba(78,205,196,0.14);
+  --c2: #FFD93D; --c2bg: rgba(255,217,61,0.14);
+  --gold: #FFB800;
+  --green: #6FCF97;
+  --red: #EB5757;
+  --text: #EEEEFF;
+  --muted: #5A607A;
+  --r: 18px;
+  --font-title: 'Jua', sans-serif;
+  --font-body: 'Noto Sans KR', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding-bottom: 80px;
+  overscroll-behavior: none;
+}
+
+/* ── Typography ── */
+.jua { font-family: var(--font-title); }
+
+/* ── Header ── */
+.app-header {
+  padding: 18px 20px 0;
+  text-align: center;
+}
+.app-title {
+  font-family: var(--font-title);
+  font-size: 1.75rem;
+  background: linear-gradient(100deg, #FF6B6B 0%, #FFD93D 50%, #4ECDC4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.sync-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.72rem; color: var(--muted); margin-top: 3px;
+  transition: color 0.3s;
+}
+.sync-badge.syncing { color: var(--gold); }
+.sync-badge.error   { color: var(--red); }
+
+/* ── Setup screen ── */
+.setup-screen {
+  max-width: 480px; margin: 40px auto 0; padding: 24px 20px;
+}
+.setup-card {
+  background: var(--surface); border-radius: 22px;
+  padding: 28px 24px; margin-bottom: 16px;
+}
+.setup-card h2 { font-family: var(--font-title); font-size: 1.2rem; margin-bottom: 6px; }
+.setup-card p  { color: var(--muted); font-size: 0.82rem; line-height: 1.6; margin-bottom: 14px; }
+.step-badge {
+  display: inline-block;
+  background: var(--gold); color: #000;
+  border-radius: 20px; padding: 3px 12px;
+  font-family: var(--font-title); font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+.setup-input {
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08); background: var(--bg);
+  color: var(--text); font-family: inherit; font-size: 0.9rem;
+  margin-bottom: 10px; outline: none;
+}
+.setup-input:focus { border-color: var(--gold); }
+.setup-btn {
+  width: 100%; padding: 14px; border-radius: 14px; border: none;
+  background: var(--gold); color: #000;
+  font-family: var(--font-title); font-size: 1rem; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.setup-btn:hover { opacity: 0.9; }
+.code-block {
+  background: var(--bg); border-radius: 10px; padding: 10px 14px;
+  font-family: monospace; font-size: 0.78rem; color: #4ECDC4;
+  word-break: break-all; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Kid tabs ── */
+.kid-tabs {
+  display: flex; gap: 8px;
+  padding: 14px 16px 0; max-width: 480px; margin: 0 auto;
+}
+.kid-tab {
+  flex: 1; background: var(--surface);
+  border: 2px solid transparent; border-radius: 14px;
+  padding: 10px 4px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: all 0.2s; font-family: var(--font-title);
+}
+.kid-tab.active-0 { border-color: var(--c0); background: var(--c0bg); }
+.kid-tab.active-1 { border-color: var(--c1); background: var(--c1bg); }
+.kid-tab.active-2 { border-color: var(--c2); background: var(--c2bg); }
+.kid-tab .t-emoji { font-size: 1.5rem; }
+.kid-tab .t-name  { font-size: 0.75rem; color: var(--muted); }
+.kid-tab .t-pts   { font-size: 0.72rem; font-weight: 700; }
+.kid-tab.active-0 .t-pts { color: var(--c0); }
+.kid-tab.active-1 .t-pts { color: var(--c1); }
+.kid-tab.active-2 .t-pts { color: var(--c2); }
+
+/* ── Main content ── */
+.content { padding: 14px 16px; max-width: 480px; margin: 0 auto; }
+
+/* ── Balance card ── */
+.balance-card {
+  border-radius: 22px; padding: 26px 24px 22px;
+  margin-bottom: 14px; position: relative; overflow: hidden;
+  animation: cardIn 0.3s ease;
+}
+.balance-card.kid-0 { background: linear-gradient(135deg,#FF6B6B,#EE5A24); }
+.balance-card.kid-1 { background: linear-gradient(135deg,#4ECDC4,#0984E3); }
+.balance-card.kid-2 { background: linear-gradient(135deg,#FFD93D,#FDCB6E 60%,#E17055); }
+.bc-deco  { position:absolute; right:-15px; top:-15px; width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,0.12); }
+.bc-deco2 { position:absolute; right:50px; bottom:-30px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.08); }
+.bc-who   { font-family:var(--font-title); font-size:0.95rem; opacity:0.85; margin-bottom:5px; }
+.bc-label { font-size:0.72rem; opacity:0.7; }
+.bc-num   { font-family:var(--font-title); font-size:3rem; letter-spacing:-2px; line-height:1.1; }
+.bc-unit  { font-size:0.85rem; opacity:0.75; margin-top:2px; }
+.bc-rank  {
+  position:absolute; right:18px; bottom:18px;
+  background:rgba(255,255,255,0.22); border-radius:20px;
+  padding:4px 12px; font-family:var(--font-title); font-size:0.78rem;
+}
+.kid-2 .bc-who, .kid-2 .bc-label, .kid-2 .bc-unit, .kid-2 .bc-rank { color: rgba(30,20,0,0.75); }
+.kid-2 .bc-num { color: #1A0A00; }
+
+/* ── Action buttons ── */
+.actions { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+.act-btn {
+  background:var(--surface); border:none; border-radius:14px;
+  padding:12px 4px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-family:var(--font-title); font-size:0.75rem;
+  transition:transform 0.12s;
+}
+.act-btn:active { transform: scale(0.92); }
+.act-btn .ai { font-size:1.4rem; }
+.act-btn.a-add  { color:var(--green); }
+.act-btn.a-sub  { color:var(--red);   }
+.act-btn.a-mis  { color:#F2C94C;      }
+.act-btn.a-rew  { color:#BB6BD9;      }
+
+/* ── Section header ── */
+.sec-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px;
+}
+.sec-title { font-family:var(--font-title); font-size:0.95rem; color:var(--muted); }
+.sec-add {
+  background:none; border:1px solid var(--surface2); color:var(--muted);
+  border-radius:8px; padding:4px 10px; font-size:0.73rem; cursor:pointer;
+  font-family:inherit;
+}
+.sec-add:hover { color:var(--text); }
+
+/* ── Mission card ── */
+.mission-card {
+  background:var(--surface); border-radius:16px;
+  padding:13px 14px; display:flex; align-items:center; gap:12px;
+  margin-bottom:8px;
+}
+.mis-check {
+  width:32px; height:32px; border-radius:50%;
+  border:2px solid var(--muted); background:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0; transition:all 0.2s; color:transparent;
+}
+.mis-check:hover { border-color:var(--gold); color:var(--gold); }
+.mis-check:active { background:var(--gold); border-color:var(--gold); color:#000; }
+.mis-name { font-size:0.88rem; font-weight:700; }
+.mis-pts  { font-family:var(--font-title); font-size:0.76rem; color:var(--gold); margin-top:2px; }
+.del-btn  { background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.95rem; padding:4px; }
+.del-btn:hover { color:var(--red); }
+
+/* ── Reward grid ── */
+.reward-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.reward-card {
+  background:var(--surface); border-radius:var(--r);
+  padding:15px 13px; cursor:pointer;
+  border:1px solid transparent; position:relative;
+  transition:transform 0.12s, border-color 0.2s;
+}
+.reward-card:active { transform:scale(0.96); }
+.reward-card.can-afford { border-color:rgba(255,184,0,0.35); }
+.rew-emoji { font-size:1.9rem; margin-bottom:6px; }
+.rew-name  { font-size:0.84rem; font-weight:700; margin-bottom:4px; }
+.rew-cost  { font-family:var(--font-title); font-size:0.78rem; color:var(--gold); }
+.rew-del   { position:absolute; top:7px; right:8px; background:none; border:none; color:transparent; cursor:pointer; font-size:0.8rem; }
+.reward-card:hover .rew-del { color:var(--muted); }
+.rew-del:hover { color:var(--red) !important; }
+
+/* ── History ── */
+.hist-item {
+  background:var(--surface); border-radius:12px;
+  padding:11px 14px; display:flex; align-items:center;
+  justify-content:space-between; margin-bottom:6px;
+}
+.hist-desc { font-size:0.86rem; }
+.hist-date { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.hist-pts  { font-family:var(--font-title); font-size:0.95rem; }
+.pts-up { color:var(--green); }
+.pts-dn { color:var(--red); }
+.empty-msg { text-align:center; color:var(--muted); padding:26px 0; font-size:0.86rem; }
+
+/* ── Bottom nav ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(13,13,26,0.96); border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; padding:10px 0 env(safe-area-inset-bottom, 16px);
+  z-index:100; backdrop-filter:blur(12px);
+}
+.nav-btn {
+  flex:1; background:none; border:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-family:var(--font-title); font-size:0.65rem; color:var(--muted);
+  padding:4px; transition:color 0.2s;
+}
+.nav-btn.active { color:var(--gold); }
+.nav-btn .ni { font-size:1.25rem; }
+
+/* ── Modal (bottom sheet) ── */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.65); z-index:200;
+  align-items:flex-end; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.overlay.open { display:flex; }
+.modal {
+  background:var(--surface); border-radius:26px 26px 0 0;
+  padding:24px 22px env(safe-area-inset-bottom, 40px);
+  width:100%; max-width:480px;
+  animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.modal-handle {
+  width:36px; height:4px; background:var(--muted);
+  border-radius:2px; margin:0 auto 18px; opacity:0.35;
+}
+.modal h3 { font-family:var(--font-title); font-size:1.1rem; margin-bottom:14px; }
+.modal-input {
+  width:100%; padding:12px 14px; border-radius:12px;
+  border:1px solid rgba(255,255,255,0.08); background:var(--bg);
+  color:var(--text); font-family:inherit; font-size:0.9rem;
+  margin-bottom:9px; outline:none; transition:border 0.2s;
+}
+.modal-input:focus { border-color:var(--gold); }
+.modal-btns { display:flex; gap:10px; margin-top:8px; }
+.modal-btns button {
+  flex:1; padding:13px; border-radius:13px; border:none;
+  font-family:var(--font-title); font-size:0.95rem; cursor:pointer;
+}
+.btn-ok     { background:var(--gold); color:#000; }
+.btn-cancel { background:var(--surface2); color:var(--muted); }
+
+/* ── Toast ── */
+.toast {
+  position:fixed; top:16px; left:50%;
+  transform:translateX(-50%) translateY(-90px);
+  background:var(--gold); color:#000; padding:9px 22px;
+  border-radius:40px; font-family:var(--font-title); font-size:0.9rem;
+  z-index:999; pointer-events:none;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── Loader ── */
+.loader {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; min-height:60vh; gap:14px;
+}
+.spinner {
+  width:40px; height:40px; border:3px solid rgba(255,184,0,0.2);
+  border-top-color:var(--gold); border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+
+/* ── Animations ── */
+@keyframes spin     { to { transform:rotate(360deg); } }
+@keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
+@keyframes cardIn   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── Add reward dashed button ── */
+.add-dashed {
+  grid-column:1/-1; width:100%; padding:13px; border-radius:14px;
+  border:1px dashed rgba(255,255,255,0.12); background:none;
+  color:var(--muted); font-family:var(--font-title); font-size:0.9rem; cursor:pointer;
+}
+.add-dashed:hover { border-color:var(--muted); color:var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ── Setup Screen ── -->
+<div id="setupScreen" style="display:none">
+  <div class="app-header"><div class="app-title">⭐ 포인트 왕국</div></div>
+  <div class="setup-screen">
+
+    <div class="setup-card">
+      <span class="step-badge">STEP 1</span>
+      <h2>Google Apps Script 설정</h2>
+      <p>아래 주소에서 새 프로젝트를 만들고, <b>Code.gs</b> 파일의 내용을 붙여넣으세요.</p>
+      <div class="code-block">https://script.google.com</div>
+      <p>그런 다음: <b>새 파일 아이콘</b> → Spreadsheet 연결 → <b>배포 → 새 배포</b> → 유형: 웹 앱 → 액세스: <b>모든 사용자</b> → 배포</p>
+    </div>
+
+    <div class="setup-card">
+      <span class="step-badge">STEP 2</span>
+      <h2>웹 앱 URL 입력</h2>
+      <p>배포 후 나오는 <b>웹 앱 URL</b>을 아래에 붙여넣으세요.<br>
+      <span style="color:var(--gold)">https://script.google.com/macros/s/...</span> 형태예요.</p>
+      <input class="setup-input" id="urlInput" type="url"
+        placeholder="https://script.google.com/macros/s/..." />
+      <button class="setup-btn" onclick="saveUrl()">✅ 연결하고 시작!</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Main App ── -->
+<div id="mainApp" style="display:none">
+  <div class="app-header">
+    <div class="app-title">⭐ 포인트 왕국</div>
+    <div class="sync-badge" id="syncBadge">☁️ Google Sheets 연동</div>
+  </div>
+
+  <!-- Kid tabs -->
+  <div class="kid-tabs" id="kidTabs"></div>
+
+  <!-- Page: Home -->
+  <div class="content" id="pageHome">
+    <div class="balance-card kid-0" id="balanceCard">
+      <div class="bc-deco"></div><div class="bc-deco2"></div>
+      <div class="bc-who" id="bcWho"></div>
+      <div class="bc-label">현재 포인트</div>
+      <div class="bc-num" id="bcNum">0</div>
+      <div class="bc-unit">포인트</div>
+      <div class="bc-rank" id="bcRank"></div>
+    </div>
+
+    <div class="actions">
+      <button class="act-btn a-add" onclick="openModal('add')"><span class="ai">➕</span>지급</button>
+      <button class="act-btn a-sub" onclick="openModal('sub')"><span class="ai">➖</span>차감</button>
+      <button class="act-btn a-mis" onclick="showPage('missions')"><span class="ai">📋</span>미션</button>
+      <button class="act-btn a-rew" onclick="showPage('rewards')"><span class="ai">🎁</span>보상</button>
+    </div>
+
+    <div class="sec-hdr">
+      <span class="sec-title">📋 미션</span>
+      <button class="sec-add" onclick="openModal('addMission')">+ 추가</button>
+    </div>
+    <div id="missionPreview"></div>
+
+    <div class="sec-hdr" style="margin-top:6px">
+      <span class="sec-title">📅 최근 내역</span>
+    </div>
+    <div id="histPreview"></div>
+  </div>
+
+  <!-- Page: Missions -->
+  <div class="content" id="pageMissions" style="display:none">
+    <div class="sec-hdr">
+      <span class="sec-title">📋 전체 미션</span>
+      <button class="sec-add" onclick="openModal('addMission')">+ 새 미션</button>
+    </div>
+    <div id="missionFull"></div>
+  </div>
+
+  <!-- Page: Rewards -->
+  <div class="content" id="pageRewards" style="display:none">
+    <div class="sec-hdr">
+      <span class="sec-title">🎁 보상 목록</span>
+    </div>
+    <div class="reward-grid" id="rewardGrid"></div>
+  </div>
+
+  <!-- Page: History -->
+  <div class="content" id="pageHistory" style="display:none">
+    <div class="sec-hdr">
+      <span class="sec-title">📅 전체 내역</span>
+    </div>
+    <div id="histFull"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home"     onclick="showPage('home')">    <span class="ni">🏠</span>홈</button>
+    <button class="nav-btn"        id="nav-missions"  onclick="showPage('missions')"><span class="ni">📋</span>미션</button>
+    <button class="nav-btn"        id="nav-rewards"   onclick="showPage('rewards')"> <span class="ni">🎁</span>보상</button>
+    <button class="nav-btn"        id="nav-history"   onclick="showPage('history')"> <span class="ni">📅</span>내역</button>
+    <button class="nav-btn"        id="nav-settings"  onclick="openModal('settings')"><span class="ni">⚙️</span>설정</button>
+  </nav>
+</div>
+
+<!-- ── Loading ── -->
+<div id="loadingScreen" class="loader">
+  <div class="spinner"></div>
+  <div class="jua" style="color:var(--gold);font-size:1rem">불러오는 중...</div>
+</div>
+
+<!-- ── Modal ── -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-ok"     id="btnOk">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const URL_KEY = 'kp_script_url';
+let SCRIPT_URL = localStorage.getItem(URL_KEY) || '';
+
+let S = { kids:[], missions:[], rewards:[], history:[], active:0 };
+let currentPage = 'home';
+let isSyncing = false;
+
+const RANK   = ['🥇','🥈','🥉'];
+const GRADS  = ['kid-0','kid-1','kid-2'];
+const ACCENTS = ['var(--c0)','var(--c1)','var(--c2)'];
+const ACCENTBGS = ['var(--c0bg)','var(--c1bg)','var(--c2bg)'];
+
+// ═══════════════════════════════════════════════════════════
+//  API — script 태그 방식 (CORS 완전 우회, 리다이렉트 문제 없음)
+// ═══════════════════════════════════════════════════════════
+function api(action, body = {}) {
+  return new Promise((resolve) => {
+    const cbName = '_cb' + Date.now();
+    const params = new URLSearchParams({ action, callback: cbName });
+    Object.entries(body).forEach(([k, v]) => params.set(k, String(v)));
+    const url = SCRIPT_URL + '?' + params.toString();
+
+    // JSONP 방식으로 호출 — CORS/리다이렉트 문제 완전 우회
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.getElementById(cbName)?.remove();
+      resolve(data);
+    };
+
+    const script = document.createElement('script');
+    script.id = cbName;
+    script.src = url;
+    script.onerror = () => {
+      delete window[cbName];
+      script.remove();
+      resolve({ ok: true }); // 에러여도 UI는 유지
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  if (!SCRIPT_URL) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('setupScreen').style.display = 'block';
+    return;
+  }
+  await loadData();
+}
+
+async function loadData() {
+  setSyncing(true);
+  try {
+    const data = await api('getData');
+    if (data.error) throw new Error(data.error);
+    S = { ...S, ...data };
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    render();
+  } catch(e) {
+    setSyncing(false, true);
+    document.getElementById('loadingScreen').innerHTML =
+      `<div style="text-align:center;padding:40px 24px">
+        <div style="font-size:2rem;margin-bottom:12px">😢</div>
+        <div class="jua" style="font-size:1rem;color:var(--red);margin-bottom:8px">연결 실패</div>
+        <div style="color:var(--muted);font-size:0.82rem;margin-bottom:20px">Script URL을 확인해주세요</div>
+        <button onclick="resetUrl()" style="background:var(--gold);border:none;border-radius:12px;padding:10px 24px;font-family:var(--font-title);cursor:pointer">URL 다시 입력</button>
+      </div>`;
+  }
+  setSyncing(false);
+}
+
+function setSyncing(on, error=false) {
+  isSyncing = on;
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.textContent = error ? '❌ 연결 오류' : on ? '🔄 동기화 중...' : '☁️ Google Sheets 연동';
+  el.className = 'sync-badge' + (error ? ' error' : on ? ' syncing' : '');
+}
+
+function saveUrl() {
+  const val = document.getElementById('urlInput').value.trim();
+  if (!val.startsWith('https://script.google.com')) {
+    alert('올바른 Apps Script URL을 입력해주세요'); return;
+  }
+  SCRIPT_URL = val;
+  localStorage.setItem(URL_KEY, val);
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'flex';
+  loadData();
+}
+
+function resetUrl() {
+  localStorage.removeItem(URL_KEY);
+  SCRIPT_URL = '';
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showPage(p) {
+  currentPage = p;
+  ['home','missions','rewards','history'].forEach(n => {
+    document.getElementById('page'+cap(n)).style.display = n===p ? 'block' : 'none';
+    const nb = document.getElementById('nav-'+n);
+    if (nb) nb.className = 'nav-btn' + (n===p ? ' active' : '');
+  });
+  render();
+}
+function cap(s) { return s[0].toUpperCase()+s.slice(1); }
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function render() {
+  renderTabs();
+  renderBalance();
+  if (currentPage==='home')     { renderMissions('missionPreview', 3); renderHistPreview(); }
+  if (currentPage==='missions') renderMissions('missionFull', 9999);
+  if (currentPage==='rewards')  renderRewards();
+  if (currentPage==='history')  renderHistFull();
+}
+
+function renderTabs() {
+  document.getElementById('kidTabs').innerHTML = S.kids.map((k,i) => `
+    <button class="kid-tab ${i===S.active?'active-'+i:''}" onclick="setActive(${i})">
+      <span class="t-emoji">${k.emoji}</span>
+      <span class="t-name">${k.name}</span>
+      <span class="t-pts">${k.points}P</span>
+    </button>`).join('');
+}
+
+function renderBalance() {
+  const k = S.kids[S.active];
+  if (!k) return;
+  document.getElementById('balanceCard').className = 'balance-card ' + GRADS[S.active];
+  document.getElementById('bcWho').textContent = `${k.emoji} ${k.name}`;
+  document.getElementById('bcNum').textContent = k.points.toLocaleString();
+  const sorted = [...S.kids].sort((a,b)=>b.points-a.points);
+  const rank = sorted.indexOf(k);
+  document.getElementById('bcRank').textContent = `${RANK[rank]||'🏅'} ${rank+1}위`;
+}
+
+function renderMissions(containerId, max) {
+  const el = document.getElementById(containerId);
+  if (!S.missions.length) { el.innerHTML = '<div class="empty-msg">미션을 추가해보세요 🎯</div>'; return; }
+  el.innerHTML = S.missions.slice(0,max).map(m => `
+    <div class="mission-card">
+      <button class="mis-check" onclick="completeMission('${m.id}','${m.name}',${m.pts})">✓</button>
+      <div style="flex:1">
+        <div class="mis-name">${m.emoji} ${m.name}</div>
+        <div class="mis-pts">+${m.pts} 포인트</div>
+      </div>
+      <button class="del-btn" onclick="deleteMission('${m.id}')">✕</button>
+    </div>`).join('');
+}
+
+function renderRewards() {
+  const pts = S.kids[S.active]?.points || 0;
+  const el = document.getElementById('rewardGrid');
+  el.innerHTML = S.rewards.map(r => `
+    <div class="reward-card ${pts>=r.cost?'can-afford':''}" onclick="redeemReward('${r.id}','${r.name}',${r.cost})">
+      <button class="rew-del" onclick="event.stopPropagation();deleteReward('${r.id}')">✕</button>
+      <div class="rew-emoji">${r.emoji}</div>
+      <div class="rew-name">${r.name}</div>
+      <div class="rew-cost">⭐ ${r.cost}P
+        ${pts>=r.cost
+          ? '<span style="color:var(--green);font-size:0.7rem"> 교환 가능!</span>'
+          : `<span style="color:var(--muted);font-size:0.7rem">(${r.cost-pts}P 부족)</span>`}
+      </div>
+    </div>`).join('');
+  el.innerHTML += `<button class="add-dashed" onclick="openModal('addReward')">+ 새 보상 추가</button>`;
+}
+
+function histHTML(h) {
+  return `<div class="hist-item">
+    <div>
+      <div class="hist-desc">${h.desc}</div>
+      <div class="hist-date">${h.date}</div>
+    </div>
+    <span class="hist-pts ${h.pts>0?'pts-up':'pts-dn'}">${h.pts>0?'+':''}${h.pts}P</span>
+  </div>`;
+}
+
+function renderHistPreview() {
+  const items = S.history.filter(h=>h.kidIdx==S.active).slice(0,5);
+  const el = document.getElementById('histPreview');
+  el.innerHTML = items.length ? items.map(histHTML).join('') : '<div class="empty-msg">아직 내역이 없어요</div>';
+}
+
+function renderHistFull() {
+  const items = S.history.filter(h=>h.kidIdx==S.active);
+  const el = document.getElementById('histFull');
+  el.innerHTML = items.length ? items.map(histHTML).join('') : '<div class="empty-msg">아직 내역이 없어요</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════════════════
+function setActive(i) {
+  S.active = i;
+  render();
+}
+
+async function doAddPoints(pts, desc) {
+  setSyncing(true);
+  // Optimistic UI update
+  S.kids[S.active].points += pts;
+  S.history.unshift({ kidIdx: S.active, desc, pts, date: fmtDate() });
+  render();
+  try {
+    await api('addPoints', { kidIdx: S.active, pts, desc });
+  } catch(e) {
+    showToast('저장 실패 😢 다시 시도해주세요');
+  }
+  setSyncing(false);
+}
+
+async function completeMission(id, name, pts) {
+  await doAddPoints(pts, `✅ ${name} 완료`);
+  showToast(`+${pts}P 획득! 🎉`);
+}
+
+async function deleteMission(id) {
+  if (!confirm('이 미션을 삭제할까요?')) return;
+  S.missions = S.missions.filter(m => String(m.id) !== String(id));
+  render();
+  await api('delMission', { id });
+  showToast('미션 삭제');
+}
+
+async function redeemReward(id, name, cost) {
+  const k = S.kids[S.active];
+  if (k.points < cost) { showToast(`${cost - k.points}P 부족해요 😢`); return; }
+  if (!confirm(`"${name}"을(를) ${cost}P로 교환할까요?`)) return;
+  await doAddPoints(-cost, `🎁 ${name} 교환`);
+  showToast(`${name} 교환 완료! 🎉`);
+}
+
+async function deleteReward(id) {
+  if (!confirm('이 보상을 삭제할까요?')) return;
+  S.rewards = S.rewards.filter(r => String(r.id) !== String(id));
+  render();
+  await api('delReward', { id });
+  showToast('보상 삭제');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════
+function openModal(type) {
+  const title = document.getElementById('modalTitle');
+  const body  = document.getElementById('modalBody');
+  const ok    = document.getElementById('btnOk');
+  const k     = S.kids[S.active] || {};
+
+  body.innerHTML = '';
+
+  if (type === 'add') {
+    title.textContent = `⭐ 포인트 지급 — ${k.emoji} ${k.name}`;
+    body.innerHTML = inp('number','mPts','포인트 입력') + inp('text','mDesc','이유 (예: 착하게 했어요 😊)');
+    ok.onclick = async () => {
+      const pts = parseInt(q('#mPts').value);
+      const desc = q('#mDesc').value.trim() || '포인트 지급';
+      if (!pts||pts<=0) { showToast('포인트를 입력해주세요'); return; }
+      closeModal(); await doAddPoints(pts, desc); showToast(`+${pts}P 지급!`);
+    };
+  } else if (type === 'sub') {
+    title.textContent = `➖ 포인트 차감 — ${k.emoji} ${k.name}`;
+    body.innerHTML = inp('number','mPts','차감 포인트') + inp('text','mDesc','이유 (예: 규칙 위반)');
+    ok.onclick = async () => {
+      const pts = parseInt(q('#mPts').value);
+      const desc = q('#mDesc').value.trim() || '포인트 차감';
+      if (!pts||pts<=0) { showToast('포인트를 입력해주세요'); return; }
+      if (k.points < pts) { showToast('포인트 부족!'); return; }
+      closeModal(); await doAddPoints(-pts, desc); showToast(`-${pts}P 차감`);
+    };
+  } else if (type === 'addMission') {
+    title.textContent = '📋 새 미션 추가';
+    body.innerHTML = inp('text','mName','미션 이름 (예: 숙제 하기)') + inp('number','mPts','완료 포인트') + inp('text','mEmoji','이모지 (예: 📚)');
+    ok.onclick = async () => {
+      const name = q('#mName').value.trim();
+      const pts  = parseInt(q('#mPts').value);
+      const emoji = q('#mEmoji').value.trim() || '⭐';
+      if (!name||!pts) { showToast('이름과 포인트를 입력해주세요'); return; }
+      const id = Date.now();
+      S.missions.push({ id, name, pts, emoji });
+      render(); closeModal(); showToast('미션 추가!');
+      await api('addMission', { name, pts, emoji });
+    };
+  } else if (type === 'addReward') {
+    title.textContent = '🎁 새 보상 추가';
+    body.innerHTML = inp('text','mName','보상 이름 (예: 치킨 먹기)') + inp('number','mCost','필요 포인트') + inp('text','mEmoji','이모지 (예: 🍗)');
+    ok.onclick = async () => {
+      const name  = q('#mName').value.trim();
+      const cost  = parseInt(q('#mCost').value);
+      const emoji = q('#mEmoji').value.trim() || '🎁';
+      if (!name||!cost) { showToast('이름과 포인트를 입력해주세요'); return; }
+      const id = Date.now();
+      S.rewards.push({ id, name, cost, emoji });
+      render(); closeModal(); showToast('보상 추가!');
+      await api('addReward', { name, cost, emoji });
+    };
+  } else if (type === 'settings') {
+    title.textContent = '⚙️ 아이 설정';
+
+    function buildSettingsBody() {
+      document.getElementById('modalBody').innerHTML =
+        S.kids.map((kid,i) => `
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+            <input class="modal-input" id="em${i}" value="${kid.emoji}" placeholder="이모지" style="width:56px;text-align:center;padding:10px 4px;margin-bottom:0">
+            <input class="modal-input" id="nm${i}" value="${kid.name}" placeholder="이름" style="flex:1;margin-bottom:0">
+            ${S.kids.length > 1 ? `<button onclick="doDelKid(${i})" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:0.8rem;white-space:nowrap;flex-shrink:0">삭제</button>` : ''}
+          </div>`).join('') +
+        `<button onclick="doAddKid()" style="width:100%;padding:11px;border-radius:12px;border:1px dashed rgba(255,255,255,0.15);background:none;color:var(--muted);font-family:var(--font-title);font-size:0.9rem;cursor:pointer;margin-top:4px;margin-bottom:12px">+ 아이 추가</button>
+         <div style="padding:8px 12px;background:rgba(235,87,87,0.1);border-radius:10px;font-size:0.78rem;color:var(--red)">⚠️ 초기화하면 포인트와 내역이 모두 삭제돼요</div>
+         <button onclick="doReset()" style="margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--red);background:none;color:var(--red);font-family:var(--font-title);cursor:pointer">전체 데이터 초기화</button>
+         <button onclick="resetUrl()" style="margin-top:8px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--muted);background:none;color:var(--muted);font-family:var(--font-title);cursor:pointer">🔗 Script URL 변경</button>`;
+    }
+    buildSettingsBody();
+
+    window.doAddKid = async () => {
+      const newIdx = S.kids.length;
+      const defaultEmojis = ['🦊','🐻','🐼','🐨','🦋','🐸'];
+      const newKid = { kidIdx: newIdx, name: '아이'+(newIdx+1), emoji: defaultEmojis[newIdx % defaultEmojis.length], points: 0 };
+      S.kids.push(newKid);
+      buildSettingsBody();
+      await api('addKid', { kidIdx: newIdx, name: newKid.name, emoji: newKid.emoji });
+      showToast('아이 추가!');
+    };
+
+    window.doDelKid = async (i) => {
+      if (!confirm('"'+S.kids[i].name+'"을(를) 삭제할까요? 해당 아이의 내역도 모두 삭제돼요.')) return;
+      S.history = S.history.filter(h => h.kidIdx !== i)
+        .map(h => ({ ...h, kidIdx: h.kidIdx > i ? h.kidIdx - 1 : h.kidIdx }));
+      S.kids.splice(i, 1);
+      S.kids.forEach((k, idx) => k.kidIdx = idx);
+      if (S.active >= S.kids.length) S.active = S.kids.length - 1;
+      buildSettingsBody();
+      render();
+      await api('delKid', { kidIdx: i });
+      showToast('삭제 완료');
+    };
+
+    ok.onclick = async () => {
+      for (let i=0; i<S.kids.length; i++) {
+        const nameEl  = document.querySelector('#nm'+i);
+        const emojiEl = document.querySelector('#em'+i);
+        if (!nameEl) continue;
+        const name  = nameEl.value.trim() || S.kids[i].name;
+        const emoji = emojiEl.value.trim() || S.kids[i].emoji;
+        S.kids[i].name  = name;
+        S.kids[i].emoji = emoji;
+        api('setKidName', { kidIdx: i, name, emoji });
+      }
+      render(); closeModal(); showToast('저장 완료!');
+    };
+  }
+
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.querySelector('.modal-input')?.focus(), 300);
+}
+
+async function doReset() {
+  if (!confirm('정말 초기화할까요? 모든 포인트와 내역이 삭제돼요.')) return;
+  setSyncing(true);
+  await api('reset');
+  closeModal();
+  await loadData();
+  showToast('초기화 완료');
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+
+function inp(type, id, ph) {
+  return `<input class="modal-input" type="${type}" id="${id}" placeholder="${ph}">`;
+}
+function q(sel) { return document.querySelector(sel); }
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function fmtDate() {
+  return new Date().toLocaleString('ko-KR', { month:'short', day:'numeric', weekday:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

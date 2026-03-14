@@ -28,6 +28,33 @@
   --font-title: 'Jua', sans-serif;
   --font-body: 'Noto Sans KR', sans-serif;
 }
+
+/* ── 라이트 모드 (모닝 모드) ── */
+body.light {
+  --bg: #FFF8F0;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --c0bg: rgba(255,107,107,0.10);
+  --c1bg: rgba(78,205,196,0.10);
+  --c2bg: rgba(255,215,61,0.10);
+  --text: #1A1A2E;
+  --muted: #9CA3AF;
+}
+body.light .bottom-nav { background: rgba(255,248,240,0.96); border-top: 1px solid rgba(0,0,0,0.08); }
+body.light .overlay { background: rgba(0,0,0,0.5); }
+body.light .modal { background: #fff; }
+body.light .modal-input { background: #F5F5F5; border-color: rgba(0,0,0,0.1); color: #1A1A2E; }
+body.light .app-title { background: linear-gradient(100deg,#FF4444,#FF8C00,#00B4A6); -webkit-background-clip:text; background-clip:text; }
+
+/* ── 테마 토글 버튼 ── */
+.theme-toggle {
+  position: absolute; right: 20px; top: 20px;
+  background: var(--surface); border: none; border-radius: 20px;
+  padding: 6px 12px; cursor: pointer; font-size: 1rem;
+  color: var(--text); transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.theme-toggle:active { transform: scale(0.92); }
 html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-body);
@@ -342,9 +369,10 @@ body {
 
 <!-- ── Main App ── -->
 <div id="mainApp" style="display:none">
-  <div class="app-header">
+  <div class="app-header" style="position:relative">
     <div class="app-title">⭐ 포인트 왕국</div>
     <div class="sync-badge" id="syncBadge">☁️ Google Sheets 연동</div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
   </div>
 
   <!-- Kid tabs -->
@@ -454,32 +482,19 @@ const ACCENTS = ['var(--c0)','var(--c1)','var(--c2)'];
 const ACCENTBGS = ['var(--c0bg)','var(--c1bg)','var(--c2bg)'];
 
 // ═══════════════════════════════════════════════════════════
-//  API — script 태그 방식 (CORS 완전 우회, 리다이렉트 문제 없음)
+//  API — fetch GET (GitHub Pages https → Apps Script)
 // ═══════════════════════════════════════════════════════════
-function api(action, body = {}) {
-  return new Promise((resolve) => {
-    const cbName = '_cb' + Date.now();
-    const params = new URLSearchParams({ action, callback: cbName });
-    Object.entries(body).forEach(([k, v]) => params.set(k, String(v)));
-    const url = SCRIPT_URL + '?' + params.toString();
-
-    // JSONP 방식으로 호출 — CORS/리다이렉트 문제 완전 우회
-    window[cbName] = (data) => {
-      delete window[cbName];
-      document.getElementById(cbName)?.remove();
-      resolve(data);
-    };
-
-    const script = document.createElement('script');
-    script.id = cbName;
-    script.src = url;
-    script.onerror = () => {
-      delete window[cbName];
-      script.remove();
-      resolve({ ok: true }); // 에러여도 UI는 유지
-    };
-    document.head.appendChild(script);
-  });
+async function api(action, body = {}) {
+  const params = new URLSearchParams({ action });
+  Object.entries(body).forEach(([k, v]) => params.set(k, String(v)));
+  const url = SCRIPT_URL + '?' + params.toString();
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    return await res.json();
+  } catch(e) {
+    console.warn('API error:', e);
+    return { ok: true }; // 낙관적 업데이트 유지
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -845,6 +860,31 @@ function fmtDate() {
 // ═══════════════════════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════════════════════
+// ── 테마 (라이트/다크) ────────────────────────────────────────
+const THEME_KEY = 'kp_theme';
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light', isLight);
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isLight ? '🌞' : '🌙';
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function toggleTheme() {
+  const current = document.body.classList.contains('light') ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) { applyTheme(saved); return; }
+  // 자동: 06:00~20:00 = 라이트, 그 외 = 다크
+  const hour = new Date().getHours();
+  applyTheme(hour >= 6 && hour < 20 ? 'light' : 'dark');
+}
+
+initTheme();
 init();
 </script>
 </body>
